@@ -1,4 +1,4 @@
-package com.jerry.lucene;
+package com.jerry.lucene.hello;
 
 import java.io.File;
 import java.io.FileReader;
