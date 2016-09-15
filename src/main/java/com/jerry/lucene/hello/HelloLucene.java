@@ -29,9 +29,9 @@ import org.apache.lucene.util.Version;
  */
 public class HelloLucene {
 
-	public static final String DATA_FILE_PATH = System.getProperty("user.dir") + File.separator + "data" + File.separator;
+	private static final String DATA_FILE_PATH = System.getProperty("user.dir") + File.separator + "data" + File.separator;
 
-	public static final String INDEX_FILE_PATH = System.getProperty("user.dir") + File.separator + "index" + File.separator;
+	private static final String INDEX_FILE_PATH = System.getProperty("user.dir") + File.separator + "index" + File.separator;
 	
 	/**
 	 * 建立索引
