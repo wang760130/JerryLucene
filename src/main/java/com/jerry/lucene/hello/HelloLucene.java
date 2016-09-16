@@ -45,9 +45,9 @@ public class HelloLucene {
 			Directory directory = FSDirectory.open(new File(INDEX_FILE_PATH));
 			
 			// 2、创建IndexWriter
-			StandardAnalyzer standardAnalyzer = new StandardAnalyzer(Version.LUCENE_35);
-			IndexWriterConfig indexWriterConfig = new IndexWriterConfig(Version.LUCENE_35, standardAnalyzer);
-			IndexWriter indexWriter = new IndexWriter(directory, indexWriterConfig);
+			StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_35);
+			IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_35, analyzer);
+			IndexWriter writer = new IndexWriter(directory, config);
 			
 			// 3、创建Document对象
 			Document document = null;
@@ -61,10 +61,10 @@ public class HelloLucene {
 				document.add(new Field("path", file.getAbsolutePath(), Field.Store.YES, Field.Index.NOT_ANALYZED));
 				
 				// 5、通过IndexWriter添加文档到索引中
-				indexWriter.addDocument(document);
+				writer.addDocument(document);
 			}
 			
-			indexWriter.close();
+			writer.close();
 		} catch (CorruptIndexException e) {
 			e.printStackTrace();
 		} catch (LockObtainFailedException e) {
@@ -83,32 +83,32 @@ public class HelloLucene {
 			Directory directory = FSDirectory.open(new File(INDEX_FILE_PATH));
 		
 			// 2、创建IndexReader
-			IndexReader indexReader = IndexReader.open(directory);
+			IndexReader reader = IndexReader.open(directory);
 			
 			// 3、根据IndexReader创建IndexSearcher
-			IndexSearcher indexSearcher = new IndexSearcher(indexReader);
+			IndexSearcher searcher = new IndexSearcher(reader);
 			
 			// 4、创建搜索的Query
 			// 创建parser来确定要搜索文件的内容
-			QueryParser queryPaeser = new QueryParser(Version.LUCENE_35, "content", new StandardAnalyzer(Version.LUCENE_35));
+			QueryParser paeser = new QueryParser(Version.LUCENE_35, "content", new StandardAnalyzer(Version.LUCENE_35));
 			// 创建query，表示搜索域为content中包含java 的文档
-			Query query = queryPaeser.parse("java");
+			Query query = paeser.parse("java");
 			
 			// 5、根据seacher搜索并且返回TopDocs
-			TopDocs topDocs = indexSearcher.search(query, 10);
+			TopDocs topDocs = searcher.search(query, 10);
 			
 			// 6、根据TopDocs获取ScoreDoc对象
 			ScoreDoc[] scoreDocs = topDocs.scoreDocs;
 			for(ScoreDoc scoreDoc : scoreDocs) {
 				// 7、根据seacher和ScordDoc对象获取具体的Document对象
-				Document document = indexSearcher.doc(scoreDoc.doc);
+				Document document = searcher.doc(scoreDoc.doc);
 			
 				// 8、根据Document对象获取需要的值
 				System.out.println("filename = " + document.get("filename") + ", path = " + document.get("path"));
 			}
 			
-			indexReader.close();
-			indexSearcher.close();
+			reader.close();
+			searcher.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ParseException e) {
