@@ -2,6 +2,8 @@ package com.jerry.lucene.hello;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,6 +11,7 @@ import java.util.Map;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.NumericField;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
@@ -30,11 +33,11 @@ import org.apache.lucene.util.Version;
  */
 public class HelloIndex {
 
-	private static final String INDEX_FILE_PATH = System.getProperty("user.dir") + File.separator + "index" + File.separator;
+	private static String INDEX_FILE_PATH = System.getProperty("user.dir") + File.separator + "index" + File.separator;
 
-	private static final String[] ids = {"1","2","3","4","5","6"};
-	private static final String[] emails = {"aa@itat.org","bb@itat.org","cc@cc.org","dd@sina.org","ee@zttc.edu","ff@itat.org"};
-	private static final String[] contents = {
+	private static String[] ids = {"1","2","3","4","5","6"};
+	private static String[] emails = {"aa@itat.org","bb@itat.org","cc@cc.org","dd@sina.org","ee@zttc.edu","ff@itat.org"};
+	private static String[] contents = {
 			"welcome to visited the space,I like book",
 			"hello boy, I like pingpeng ball",
 			"my name is cc I like game",
@@ -43,16 +46,16 @@ public class HelloIndex {
 			"I like movie and swim"
 	};
 	
-	private static final Date[] dates = null;
-	private static final int[] attachs = {2,3,1,4,5,5};
-	private static final String[] names = {"zhangsan","lisi","john","jetty","mike","jake"};
+	private static Date[] dates = null;
+	private static int[] attachs = {2,3,1,4,5,5};
+	private static String[] names = {"zhangsan","lisi","john","jetty","mike","jake"};
 	private static Directory directory = null;
-	private static final Map<String,Float> scores = new HashMap<String,Float>();
-	private static final IndexReader reader = null;
+	private static Map<String,Float> scores = new HashMap<String,Float>();
 	
 	static {
 		try {
 			setScores();
+			setDates();
 			directory = FSDirectory.open(new File(INDEX_FILE_PATH));
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -62,6 +65,22 @@ public class HelloIndex {
 	private static void setScores() {
 		scores.put("itat.org",2.0f);
 		scores.put("zttc.edu", 1.5f);
+	}
+	
+	private static void setDates() {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		dates = new Date[ids.length];
+		try {
+			dates[0] = sdf.parse("2010-02-19");
+			dates[1] = sdf.parse("2012-01-11");
+			dates[2] = sdf.parse("2011-09-19");
+			dates[3] = sdf.parse("2010-12-22");
+			dates[4] = sdf.parse("2012-01-01");
+			dates[5] = sdf.parse("2011-05-19");
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		
 	}
 	
 	public static void index() {
@@ -77,6 +96,13 @@ public class HelloIndex {
 				document.add(new Field("content",contents[i],Field.Store.NO,Field.Index.ANALYZED));
 				document.add(new Field("name",names[i],Field.Store.YES,Field.Index.NOT_ANALYZED_NO_NORMS));
 				
+				// 数字索引
+				document.add(new NumericField("attachs", Field.Store.YES, true).setIntValue(attachs[i]));
+				
+				// 日期索引
+				document.add(new NumericField("date", Field.Store.YES, true).setLongValue(dates[i].getTime()));
+				
+				// 权重
 				String et = emails[i].substring(emails[i].lastIndexOf("@")+1);
 				if(scores.containsKey(et)) {
 					document.setBoost(scores.get(et));
