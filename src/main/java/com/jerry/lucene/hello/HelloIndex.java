@@ -51,15 +51,35 @@ public class HelloIndex {
 	private static String[] names = {"zhangsan","lisi","john","jetty","mike","jake"};
 	private static Directory directory = null;
 	private static Map<String,Float> scores = new HashMap<String,Float>();
+	private static IndexReader reader = null;
 	
 	static {
 		try {
 			setScores();
 			setDates();
 			directory = FSDirectory.open(new File(INDEX_FILE_PATH));
+			reader = IndexReader.open(directory);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public static IndexSearcher getSearcher() {
+		try {
+			if(reader == null) {
+				reader = IndexReader.open(directory);
+			} else {
+				IndexReader tr = IndexReader.openIfChanged(reader);
+				if(tr != null) {
+					reader = tr;
+				}
+			}
+		} catch (CorruptIndexException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return new IndexSearcher(reader);
 	}
 	
 	private static void setScores() {
@@ -233,8 +253,7 @@ public class HelloIndex {
 	
 	public static void search() {
 		try {
-			IndexReader reader = IndexReader.open(directory);
-			IndexSearcher searcher = new IndexSearcher(reader);
+			IndexSearcher searcher = getSearcher();
 			TermQuery query = new TermQuery(new Term("content", "like"));
 			TopDocs topDocs = searcher.search(query, 10);
 			for(ScoreDoc scoreDoc : topDocs.scoreDocs) {
@@ -243,7 +262,6 @@ public class HelloIndex {
 			}
 			
 			searcher.close();
-			reader.close();
 		} catch (CorruptIndexException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
