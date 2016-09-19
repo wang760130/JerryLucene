@@ -58,7 +58,7 @@ public class HelloIndex {
 			setScores();
 			setDates();
 			directory = FSDirectory.open(new File(INDEX_FILE_PATH));
-			reader = IndexReader.open(directory);
+			reader = IndexReader.open(directory, false);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -67,10 +67,11 @@ public class HelloIndex {
 	public static IndexSearcher getSearcher() {
 		try {
 			if(reader == null) {
-				reader = IndexReader.open(directory);
+				reader = IndexReader.open(directory, false);
 			} else {
 				IndexReader tr = IndexReader.openIfChanged(reader);
 				if(tr != null) {
+					reader.close();
 					reader = tr;
 				}
 			}
@@ -157,13 +158,26 @@ public class HelloIndex {
 		}
 	}
 	
-	public static void delete() {
+	public static void writerDelete() {
 		try {
 			IndexWriter writer = new IndexWriter(directory, new IndexWriterConfig(Version.LUCENE_35, new StandardAnalyzer(Version.LUCENE_35)));
 			// 参数是一个选项，可以是一个Query，也可以是一个term，term是一个精确查找的值
 			// 此时删除的文档并不会被完全删除，而是存储在一个回收站中的，可以恢复
 			writer.deleteDocuments(new Term("id", "1"));
 			writer.close();
+		} catch (CorruptIndexException e) {
+			e.printStackTrace();
+		} catch (LockObtainFailedException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void readerDelete() {
+		try {
+			reader.deleteDocuments(new Term("id", "1"));
+			reader.close();
 		} catch (CorruptIndexException e) {
 			e.printStackTrace();
 		} catch (LockObtainFailedException e) {
