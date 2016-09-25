@@ -358,4 +358,43 @@ public class HelloSearcher {
 			e.printStackTrace();
 		}
 	}
+	
+	/**
+	 * 根据页码和分页大小获取上一次的最后一个ScoreDoc
+	 * @param pageIndex
+	 * @param pageSize
+	 * @param query
+	 * @param searcher
+	 * @return
+	 * @throws IOException
+	 */
+	private static ScoreDoc getLastScoreDoc(int pageIndex, int pageSize, Query query, IndexSearcher searcher) throws IOException {
+		if(pageIndex == 1) {
+			return null;
+		}
+		int num = pageSize * (pageIndex - 1);
+		TopDocs tds = searcher.search(query, num);
+		return tds.scoreDocs[num - 1];
+	}
+	
+	public static void searchPageByAfter(String content, int pageIndex, int pageSize) {
+		try {
+			IndexSearcher searcher = getSearcher();
+			QueryParser parser = new QueryParser(Version.LUCENE_35, "content", new StandardAnalyzer(Version.LUCENE_35));
+			Query query = parser.parse(content);
+			ScoreDoc lastSocreDoc = getLastScoreDoc(pageIndex, pageSize, query, searcher);
+			TopDocs tds = searcher.searchAfter(lastSocreDoc, query, pageSize);
+			for(ScoreDoc sd : tds.scoreDocs) {
+				Document document = searcher.doc(sd.doc);
+				System.out.println(document.get("id") + ", " + document.get("name") + ", " + document.get("email"));
+			}
+			searcher.close();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
 } 
