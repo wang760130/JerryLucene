@@ -2,10 +2,14 @@ package com.jerry.lucene.hello;
 
 import java.io.IOException;
 
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queryParser.ParseException;
+import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.queryParser.QueryParser.Operator;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.FuzzyQuery;
@@ -21,6 +25,7 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
+import org.apache.lucene.util.Version;
 
 /**
  * @author Jerry Wang
@@ -29,14 +34,14 @@ import org.apache.lucene.store.RAMDirectory;
  */
 public class HelloSearcher {
 	
-	private Directory directory;
-	private IndexReader reader;
+	private static Directory directory;
+	private static IndexReader reader;
 	
-	public HelloSearcher() {
+	static {
 		directory = new RAMDirectory();
 	}
 	
-	public IndexSearcher getSearcher() {
+	public static IndexSearcher getSearcher() {
 		try {
 			if(reader == null) {
 				reader = IndexReader.open(directory);
@@ -63,7 +68,7 @@ public class HelloSearcher {
 	 * @param name
 	 * @param num
 	 */
-	public void searchByTerm(String field, String name, int num) {
+	public static void searchByTerm(String field, String name, int num) {
 		try {
 			IndexSearcher searcher = getSearcher();
 			Query query = new TermQuery(new Term(field, name));
@@ -89,7 +94,7 @@ public class HelloSearcher {
 	 * @param end
 	 * @param num
 	 */
-	public void searchByRange(String field, String name, String start, String end, int num) {
+	public static void searchByRange(String field, String name, String start, String end, int num) {
 		try {
 			IndexSearcher searcher = getSearcher();
 			Query query = new TermRangeQuery(field, start, end, true, true);
@@ -114,7 +119,7 @@ public class HelloSearcher {
 	 * @param end
 	 * @param num
 	 */
-	public void searchByNumricRange(String field, int start, int end, int num) {
+	public static void searchByNumricRange(String field, int start, int end, int num) {
 		try {
 			IndexSearcher searcher = getSearcher();
 			Query query = NumericRangeQuery.newIntRange(field, start, end, true, true);
@@ -138,7 +143,7 @@ public class HelloSearcher {
 	 * @param value
 	 * @param num
 	 */
-	public void searchByPrefix(String field, String value, int num) {
+	public static void searchByPrefix(String field, String value, int num) {
 		try {
 			IndexSearcher searcher = getSearcher();
 			Query query = new PrefixQuery(new Term(field, value));
@@ -162,7 +167,7 @@ public class HelloSearcher {
 	 * @param value
 	 * @param num
 	 */
-	public void searchByWildcard(String field, String value, int num) {
+	public static void searchByWildcard(String field, String value, int num) {
 		try {
 			IndexSearcher searcher = getSearcher();
 			// 在传入的value中可以使用通配符：?和*，?表示匹配一个字符，*表示匹配任意多个字符
@@ -181,8 +186,7 @@ public class HelloSearcher {
 		}
 	}
 	
-	
-	public void searchByBoolean(String field1, String value1, String field2, String value2, int num) {
+	public static void searchByBoolean(String field1, String value1, String field2, String value2, int num) {
 		try {
 			IndexSearcher searcher = getSearcher();
 			BooleanQuery query = new BooleanQuery();
@@ -209,7 +213,7 @@ public class HelloSearcher {
 		}
 	}
 	
-	public void searchByPhrase(String field1, String value1, String field2, String value2, int num) {
+	public static void searchByPhrase(String field1, String value1, String field2, String value2, int num) {
 		try {
 			IndexSearcher searcher = getSearcher();
 			PhraseQuery query = new PhraseQuery();
@@ -236,7 +240,7 @@ public class HelloSearcher {
 	 * @param value
 	 * @param num
 	 */
-	public void searchByFuzzy(String field, String value, int num) {
+	public static void searchByFuzzy(String field, String value, int num) {
 		try {
 			IndexSearcher searcher = getSearcher();
 			Query query = new FuzzyQuery(new Term(field, value));
@@ -252,5 +256,88 @@ public class HelloSearcher {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public static void searchByQueryParse(Query query, int num) {
+		try {
+			IndexSearcher searcher = getSearcher();
+			TopDocs tds = searcher.search(query, num);
+			System.out.println("一共查询了：" + tds.totalHits);
+			
+			for(ScoreDoc sd : tds.scoreDocs) {
+				Document document = searcher.doc(sd.doc);
+				System.out.println(document.get("id") + ", " + document.get("name") + ", " + document.get("email"));
+			}
+			
+			searcher.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void main(String[] args) throws ParseException {
+		// 创建QueryParser对象
+		QueryParser parser = new QueryParser(Version.LUCENE_35, "content", new StandardAnalyzer(Version.LUCENE_35));
+		
+		// 改变空格的默认操作符，以下可以改成AND
+		parser.setDefaultOperator(Operator.AND);
+		
+		// 索搜content中包含like的
+		Query query = parser.parse("like");
+		
+		// 空格默认就是OR
+		query = parser.parse("backetball football");
+		
+		// 改变索搜域为name为mike
+		query = parser.parse("name:mike");
+		
+		// 同样可以使用*和？来进行通配符匹配
+		query = parser.parse("name:j*");
+		
+		// 开启第一个字符的通配符匹配，默认关闭，应为效率不高
+		parser.setAllowLeadingWildcard(true);
+		// 通配符默认不能放在首位
+		query = parser.parse("emial:*@itat.org");
+		
+		// 匹配name中没有mike但是content中必须有football的，+和-要放置到域说明前面
+		query = parser.parse("name:mike - football+");
+		
+		// 匹配一个区间，主要：TO必须是大写
+		query = parser.parse("id:[1 TO 3]");
+		// 闭区间
+		query = parser.parse("id:(1 TO 3)");
+		
+		// 完全匹配
+		query = parser.parse("\"I like football\"");
+		
+		// 距离一个单词
+		query = parser.parse("\"I football\"~1");
+		
+		// 模糊查询
+		query = parser.parse("name:make~");
+		HelloSearcher.searchByQueryParse(query, 10);
+	}
+	
+	public static void searchPage(String content, int pageIndex, int pageSize) {
+		try {
+			IndexSearcher searcher = getSearcher();
+			QueryParser parser = new QueryParser(Version.LUCENE_35, "content", new StandardAnalyzer(Version.LUCENE_35));
+			Query query = parser.parse(content);
+			TopDocs tds = searcher.search(query, 500);
+			ScoreDoc[] sds = tds.scoreDocs;
+			
+			int start = (pageIndex - 1) * pageSize + pageSize;
+			int end = pageIndex * pageSize;
+			for(int i = start; i < end; i++ ) {
+				Document document = searcher.doc(sds[i].doc);
+				System.out.println(document.get("id") + ", " + document.get("name") + ", " + document.get("email"));
+			}
+			searcher.close();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 	}
 } 
