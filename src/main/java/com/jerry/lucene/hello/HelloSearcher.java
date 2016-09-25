@@ -338,6 +338,24 @@ public class HelloSearcher {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+	}
+	
+	public static void searchPageByAfter(String content, ScoreDoc after, int pageSize) {
+		try {
+			IndexSearcher searcher = getSearcher();
+			QueryParser parser = new QueryParser(Version.LUCENE_35, "content", new StandardAnalyzer(Version.LUCENE_35));
+			Query query = parser.parse(content);
+			TopDocs tds = searcher.searchAfter(after, query, pageSize);
+			ScoreDoc[] sds = tds.scoreDocs;
+			for(ScoreDoc sd : sds) {
+				Document document = searcher.doc(sd.doc);
+				System.out.println(document.get("id") + ", " + document.get("name") + ", " + document.get("email"));
+			}
+			searcher.close();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 } 
