@@ -4,13 +4,11 @@ import java.io.IOException;
 import java.io.StringReader;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.SimpleAnalyzer;
-import org.apache.lucene.analysis.StopAnalyzer;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.WhitespaceAnalyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.util.Version;
+import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
+import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
+import org.apache.lucene.analysis.tokenattributes.TypeAttribute;
 
 /**
  * @author Jerry Wang
@@ -32,18 +30,22 @@ public class HelloAnalyzer {
 		}
 	}
 	
-	public static void main(String[] args) {
-		Analyzer stamdarAnalyzer = new StandardAnalyzer(Version.LUCENE_35);
-		Analyzer stopAnalyzer = new StopAnalyzer(Version.LUCENE_35);
-		Analyzer simpleAnalyzer = new SimpleAnalyzer(Version.LUCENE_35);
-		Analyzer whitespaceAnalyzer = new WhitespaceAnalyzer(Version.LUCENE_35);
-		
-		String txt = "This is my house, I am come from hangzhou alibaba";
-		HelloAnalyzer.displayToken("content", txt, stamdarAnalyzer);
-		HelloAnalyzer.displayToken("content", txt, stopAnalyzer);
-		HelloAnalyzer.displayToken("content", txt, simpleAnalyzer);
-		HelloAnalyzer.displayToken("content", txt, whitespaceAnalyzer);
-
-		
+	public static void displayAllToTokenInfo(String fieldName, String str, Analyzer analyzer) {
+		try {
+			TokenStream stream = analyzer.tokenStream(fieldName, new StringReader(str));
+			PositionIncrementAttribute pia = stream.addAttribute(PositionIncrementAttribute.class);
+			OffsetAttribute oa = stream.addAttribute(OffsetAttribute.class);
+			CharTermAttribute cta = stream.addAttribute(CharTermAttribute.class);
+			TypeAttribute ta = stream.addAttribute(TypeAttribute.class);
+			
+			for(;stream.incrementToken();) {
+				System.out.print(pia.getPositionIncrement() + ":");
+				System.out.print(cta + "[" +oa.startOffset()+ "]" + "-" + "[" + oa.endOffset() + "]" + "-" + "[" + ta.type() + "]");
+				System.out.println();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
+	
 }
