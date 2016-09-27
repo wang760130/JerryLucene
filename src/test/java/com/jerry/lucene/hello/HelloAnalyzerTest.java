@@ -8,6 +8,8 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.util.Version;
 import org.junit.Test;
 
+import com.jerry.lucene.analyzer.MyStopAnalyzer;
+
 /**
  * @author Jerry Wang
  * @Email  jerry002@126.com
@@ -41,5 +43,16 @@ public class HelloAnalyzerTest {
 		HelloAnalyzer.displayAllToTokenInfo("content", txt, stopAnalyzer);
 		HelloAnalyzer.displayAllToTokenInfo("content", txt, simpleAnalyzer);
 		HelloAnalyzer.displayAllToTokenInfo("content", txt, whitespaceAnalyzer);
+	}
+	
+	@Test
+	public void myStopAnalyzerTest() {
+		Analyzer myStopAnalyzer = new MyStopAnalyzer(new String[] {"I", "This", "is"});
+		Analyzer stopAnalyzer = new StopAnalyzer(Version.LUCENE_35);
+		String txt = "This is my house, I am come from hangzhou alibaba";
+
+		HelloAnalyzer.displayToken("content", txt, myStopAnalyzer);
+		HelloAnalyzer.displayToken("content", txt, stopAnalyzer);
+
 	}
 }
