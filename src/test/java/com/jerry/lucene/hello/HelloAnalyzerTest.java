@@ -8,6 +8,8 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.util.Version;
 import org.junit.Test;
 
+import com.chenlb.mmseg4j.analysis.MMSegAnalyzer;
+import com.jerry.lucene.analyzer.MySameAnalyzer;
 import com.jerry.lucene.analyzer.MyStopAnalyzer;
 
 /**
@@ -53,6 +55,19 @@ public class HelloAnalyzerTest {
 
 		HelloAnalyzer.displayToken("content", txt, myStopAnalyzer);
 		HelloAnalyzer.displayToken("content", txt, stopAnalyzer);
-
+	}
+	
+	@Test
+	public void mmsegAnalyzerTest() {
+		Analyzer mmsegAnalyzer = new MMSegAnalyzer();
+		String txt = "我来自中国浙江省杭州市";
+		HelloAnalyzer.displayToken("content", txt, mmsegAnalyzer);
+	}
+	
+	@Test
+	public void mySameAnalyzerTest() {
+		Analyzer mmsegAnalyzer = new MySameAnalyzer();
+		String txt = "我来自中国浙江省杭州市";
+		HelloAnalyzer.displayToken("content", txt, mmsegAnalyzer);
 	}
 }
