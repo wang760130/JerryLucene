@@ -22,12 +22,14 @@ public class MySameTokenFilter extends TokenFilter {
 	private PositionIncrementAttribute pia = null;
 	private AttributeSource.State current;
 	private Stack<String> sames = null;
+	private SameWordContext sameWordContext = null;
 	
-	protected MySameTokenFilter(TokenStream input) {
+	protected MySameTokenFilter(TokenStream input, SameWordContext sameWordContext) {
 		super(input);
 		cta = this.addAttribute(CharTermAttribute.class);
 		pia = this.addAttribute(PositionIncrementAttribute.class);
 		sames = new Stack<String>();
+		this.sameWordContext = sameWordContext;
 	}
 
 	@Override
@@ -50,7 +52,7 @@ public class MySameTokenFilter extends TokenFilter {
 			return false;
 		}
 		
-		if(getSameWords(cta.toString())) {
+		if(addSames(cta.toString())) {
 			// 如果有同义词将当前状态先保存
 			current = captureState();
 		}
@@ -58,11 +60,8 @@ public class MySameTokenFilter extends TokenFilter {
 		return true;
 	}
 
-	private boolean getSameWords(String name) {
-		Map<String, String[]> maps = new HashMap<String, String[]>();
-		maps.put("中国",new String[]{"天朝","大陆"});
-		maps.put("我",new String[]{"咱","俺"});
-		String[] sws = maps.get(name);
+	private boolean addSames(String name) {
+		String[] sws = sameWordContext.getSameWords(name);
 		if(sws != null) {
 			for(String str : sws) {
 				sames.push(str);

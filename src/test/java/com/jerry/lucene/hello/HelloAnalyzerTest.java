@@ -11,6 +11,8 @@ import org.junit.Test;
 import com.chenlb.mmseg4j.analysis.MMSegAnalyzer;
 import com.jerry.lucene.analyzer.MySameAnalyzer;
 import com.jerry.lucene.analyzer.MyStopAnalyzer;
+import com.jerry.lucene.analyzer.SameWordContext;
+import com.jerry.lucene.analyzer.SimpleSameWordContext;
 
 /**
  * @author Jerry Wang
@@ -66,7 +68,8 @@ public class HelloAnalyzerTest {
 	
 	@Test
 	public void mySameAnalyzerTest() {
-		Analyzer mmsegAnalyzer = new MySameAnalyzer();
+		SameWordContext sameWordContext = new SimpleSameWordContext();
+		Analyzer mmsegAnalyzer = new MySameAnalyzer(sameWordContext);
 		String txt = "我来自中国浙江省杭州市";
 		HelloAnalyzer.displayToken("content", txt, mmsegAnalyzer);
 	}
