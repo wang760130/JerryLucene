@@ -1,6 +1,8 @@
 package com.jerry.lucene.analyzer;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Stack;
 
 import org.apache.lucene.analysis.TokenFilter;
@@ -30,16 +32,43 @@ public class MySameTokenFilter extends TokenFilter {
 
 	@Override
 	public boolean incrementToken() throws IOException {
+		while(sames.size() > 0) {
+			// 将元素出栈，并且获取这个同义词
+			String str = sames.pop();
+			// 还原状态
+			restoreState(current);
+			
+			cta.setEmpty();
+			cta.append(str);
+			
+			// 设置位置0
+			pia.setPositionIncrement(0);
+			return true;
+		}
+		
 		if(!input.incrementToken()) {
 			return false;
 		}
 		
-		if(cta.toString().equals("中国")) {
-			cta.setEmpty();
-			cta.append("大陆");
+		if(getSameWords(cta.toString())) {
+			// 如果有同义词将当前状态先保存
+			current = captureState();
 		}
-//		System.out.println(cta);
+		
 		return true;
 	}
 
+	private boolean getSameWords(String name) {
+		Map<String, String[]> maps = new HashMap<String, String[]>();
+		maps.put("中国",new String[]{"天朝","大陆"});
+		maps.put("我",new String[]{"咱","俺"});
+		String[] sws = maps.get(name);
+		if(sws != null) {
+			for(String str : sws) {
+				sames.push(str);
+			}
+			return true;
+		}
+		return false;
+	}
 }
