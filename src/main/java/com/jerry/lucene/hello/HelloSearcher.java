@@ -1,15 +1,23 @@
 package com.jerry.lucene.hello;
 
+import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.NumericField;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
-import org.apache.lucene.queryParser.QueryParser.Operator;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.FuzzyQuery;
@@ -24,7 +32,8 @@ import org.apache.lucene.search.TermRangeQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.RAMDirectory;
+import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.util.Version;
 
 /**
@@ -34,17 +43,62 @@ import org.apache.lucene.util.Version;
  */
 public class HelloSearcher {
 	
-	private static Directory directory;
-	private static IndexReader reader;
+	private static String INDEX_FILE_PATH = System.getProperty("user.dir") + File.separator + "index" + File.separator;
+
+	private static String[] ids = {"1","2","3","4","5","6"};
+	private static String[] emails = {"aa@itat.org","bb@itat.org","cc@cc.org","dd@sina.org","ee@zttc.edu","ff@itat.org"};
+	private static String[] contents = {
+			"welcome to visited the space,I like book",
+			"hello boy, I like pingpeng ball",
+			"my name is cc I like game",
+			"I like football",
+			"I like football and I like basketball too",
+			"I like movie and swim"
+	};
+	
+	private static Date[] dates = null;
+	private static int[] attachs = {2,3,1,4,5,5};
+	private static String[] names = {"zhangsan","lisi","john","jetty","mike","jake"};
+	private static Map<String,Float> scores = new HashMap<String,Float>();
+	
+	private static Directory directory = null;
+	private static IndexReader reader = null;
 	
 	static {
-		directory = new RAMDirectory();
+		try {
+			setScores();
+			setDates();
+			directory = FSDirectory.open(new File(INDEX_FILE_PATH));
+			reader = IndexReader.open(directory, false);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
-	public static IndexSearcher getSearcher() {
+	private static void setScores() {
+		scores.put("itat.org", 2.0f);
+		scores.put("zttc.edu", 1.5f);
+	}
+	
+	private static void setDates()  {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		dates = new Date[ids.length];
+		try {
+			dates[0] = sdf.parse("2010-02-19");
+			dates[1] = sdf.parse("2012-01-11");
+			dates[2] = sdf.parse("2011-09-19");
+			dates[3] = sdf.parse("2010-12-22");
+			dates[4] = sdf.parse("2012-01-01");
+			dates[5] = sdf.parse("2011-05-19");
+		} catch (java.text.ParseException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private static IndexSearcher getSearcher() {
 		try {
 			if(reader == null) {
-				reader = IndexReader.open(directory);
+				reader = IndexReader.open(directory, false);
 			} else {
 				IndexReader tr = IndexReader.openIfChanged(reader);
 				if(tr != null) {
@@ -52,14 +106,65 @@ public class HelloSearcher {
 					reader = tr;
 				}
 			}
-			return new IndexSearcher(reader);
-
 		} catch (CorruptIndexException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return null;
+		return new IndexSearcher(reader);
+	}
+	
+	private static void print(ScoreDoc scoreDoc, Document document) {
+		StringBuffer sb = new StringBuffer();
+		sb.append("doc=").append(scoreDoc.doc).append(", ");
+		sb.append("boost=").append(document.getBoost()).append(", ");
+		sb.append("score=").append(scoreDoc.score).append(", ");
+		sb.append("id=").append(document.get("id")).append(", ");
+		sb.append("name=").append(document.get("name")).append(", ");
+		sb.append("email=").append(document.get("email")).append(", ");
+		sb.append("date=").append(document.get("date")).append(", ");
+		sb.append("attach=").append(document.get("attach")).append(", ");
+		System.out.println(sb.toString());
+	}
+	
+	public static void index() {
+		try {
+			IndexWriter indexWriter = new IndexWriter(directory, new IndexWriterConfig(Version.LUCENE_35, new StandardAnalyzer(Version.LUCENE_35)));
+		
+			Document document = null;
+			
+			for(int i = 0; i < ids.length; i++) {
+				document = new Document();
+				document.add(new Field("id", ids[i], Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+				document.add(new Field("email",emails[i],Field.Store.YES,Field.Index.NOT_ANALYZED));
+				document.add(new Field("content",contents[i],Field.Store.NO,Field.Index.ANALYZED));
+				document.add(new Field("name",names[i],Field.Store.YES,Field.Index.NOT_ANALYZED_NO_NORMS));
+				
+				// 数字索引
+				document.add(new NumericField("attachs", Field.Store.YES, true).setIntValue(attachs[i]));
+				
+				// 日期索引
+				document.add(new NumericField("date", Field.Store.YES, true).setLongValue(dates[i].getTime()));
+				
+				// 权重
+				String et = emails[i].substring(emails[i].lastIndexOf("@")+1);
+				if(scores.containsKey(et)) {
+					document.setBoost(scores.get(et));
+				} else {
+					document.setBoost(0.5f);
+				}
+				
+				indexWriter.addDocument(document);
+			}
+			
+			indexWriter.close();
+		} catch (CorruptIndexException e) {
+			e.printStackTrace();
+		} catch (LockObtainFailedException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -75,9 +180,9 @@ public class HelloSearcher {
 			TopDocs tds = searcher.search(query, num);
 			System.out.println("一共查询了：" + tds.totalHits);
 			
-			for(ScoreDoc sd : tds.scoreDocs) {
-				Document document = searcher.doc(sd.doc);
-				System.out.println(document.get("id") + ", " + document.get("name") + ", " + document.get("email"));
+			for(ScoreDoc scoreDoc : tds.scoreDocs) {
+				Document document = searcher.doc(scoreDoc.doc);
+				print(scoreDoc, document);
 			}
 			
 			searcher.close();
@@ -101,9 +206,9 @@ public class HelloSearcher {
 			TopDocs tds = searcher.search(query, num);
 			System.out.println("一共查询了：" + tds.totalHits);
 			
-			for(ScoreDoc sd : tds.scoreDocs) {
-				Document document = searcher.doc(sd.doc);
-				System.out.println(document.get("id") + ", " + document.get("name") + ", " + document.get("email"));
+			for(ScoreDoc scoreDoc : tds.scoreDocs) {
+				Document document = searcher.doc(scoreDoc.doc);
+				print(scoreDoc, document);
 			}
 			
 			searcher.close();
@@ -126,9 +231,9 @@ public class HelloSearcher {
 			TopDocs tds = searcher.search(query, num);
 			System.out.println("一共查询了：" + tds.totalHits);
 			
-			for(ScoreDoc sd : tds.scoreDocs) {
-				Document document = searcher.doc(sd.doc);
-				System.out.println(document.get("id") + ", " + document.get("name") + ", " + document.get("email"));
+			for(ScoreDoc scoreDoc : tds.scoreDocs) {
+				Document document = searcher.doc(scoreDoc.doc);
+				print(scoreDoc, document);
 			}
 			
 			searcher.close();
@@ -150,9 +255,9 @@ public class HelloSearcher {
 			TopDocs tds = searcher.search(query, num);
 			System.out.println("一共查询了：" + tds.totalHits);
 			
-			for(ScoreDoc sd : tds.scoreDocs) {
-				Document document = searcher.doc(sd.doc);
-				System.out.println(document.get("id") + ", " + document.get("name") + ", " + document.get("email"));
+			for(ScoreDoc scoreDoc : tds.scoreDocs) {
+				Document document = searcher.doc(scoreDoc.doc);
+				print(scoreDoc, document);
 			}
 			
 			searcher.close();
@@ -175,9 +280,9 @@ public class HelloSearcher {
 			TopDocs tds = searcher.search(query, num);
 			System.out.println("一共查询了：" + tds.totalHits);
 			
-			for(ScoreDoc sd : tds.scoreDocs) {
-				Document document = searcher.doc(sd.doc);
-				System.out.println(document.get("id") + ", " + document.get("name") + ", " + document.get("email"));
+			for(ScoreDoc scoreDoc : tds.scoreDocs) {
+				Document document = searcher.doc(scoreDoc.doc);
+				print(scoreDoc, document);
 			}
 			
 			searcher.close();
@@ -202,9 +307,9 @@ public class HelloSearcher {
 			TopDocs tds = searcher.search(query, num);
 			System.out.println("一共查询了：" + tds.totalHits);
 			
-			for(ScoreDoc sd : tds.scoreDocs) {
-				Document document = searcher.doc(sd.doc);
-				System.out.println(document.get("id") + ", " + document.get("name") + ", " + document.get("email"));
+			for(ScoreDoc scoreDoc : tds.scoreDocs) {
+				Document document = searcher.doc(scoreDoc.doc);
+				print(scoreDoc, document);
 			}
 			
 			searcher.close();
@@ -223,9 +328,9 @@ public class HelloSearcher {
 			TopDocs tds = searcher.search(query, num);
 			System.out.println("一共查询了：" + tds.totalHits);
 			
-			for(ScoreDoc sd : tds.scoreDocs) {
-				Document document = searcher.doc(sd.doc);
-				System.out.println(document.get("id") + ", " + document.get("name") + ", " + document.get("email"));
+			for(ScoreDoc scoreDoc : tds.scoreDocs) {
+				Document document = searcher.doc(scoreDoc.doc);
+				print(scoreDoc, document);
 			}
 			
 			searcher.close();
@@ -247,9 +352,9 @@ public class HelloSearcher {
 			TopDocs tds = searcher.search(query, num);
 			System.out.println("一共查询了：" + tds.totalHits);
 			
-			for(ScoreDoc sd : tds.scoreDocs) {
-				Document document = searcher.doc(sd.doc);
-				System.out.println(document.get("id") + ", " + document.get("name") + ", " + document.get("email"));
+			for(ScoreDoc scoreDoc : tds.scoreDocs) {
+				Document document = searcher.doc(scoreDoc.doc);
+				print(scoreDoc, document);
 			}
 			
 			searcher.close();
@@ -264,58 +369,15 @@ public class HelloSearcher {
 			TopDocs tds = searcher.search(query, num);
 			System.out.println("一共查询了：" + tds.totalHits);
 			
-			for(ScoreDoc sd : tds.scoreDocs) {
-				Document document = searcher.doc(sd.doc);
-				System.out.println(document.get("id") + ", " + document.get("name") + ", " + document.get("email"));
+			for(ScoreDoc scoreDoc : tds.scoreDocs) {
+				Document document = searcher.doc(scoreDoc.doc);
+				print(scoreDoc, document);
 			}
 			
 			searcher.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-	
-	public static void main(String[] args) throws ParseException {
-		// 创建QueryParser对象
-		QueryParser parser = new QueryParser(Version.LUCENE_35, "content", new StandardAnalyzer(Version.LUCENE_35));
-		
-		// 改变空格的默认操作符，以下可以改成AND
-		parser.setDefaultOperator(Operator.AND);
-		
-		// 索搜content中包含like的
-		Query query = parser.parse("like");
-		
-		// 空格默认就是OR
-		query = parser.parse("backetball football");
-		
-		// 改变索搜域为name为mike
-		query = parser.parse("name:mike");
-		
-		// 同样可以使用*和？来进行通配符匹配
-		query = parser.parse("name:j*");
-		
-		// 开启第一个字符的通配符匹配，默认关闭，应为效率不高
-		parser.setAllowLeadingWildcard(true);
-		// 通配符默认不能放在首位
-		query = parser.parse("emial:*@itat.org");
-		
-		// 匹配name中没有mike但是content中必须有football的，+和-要放置到域说明前面
-		query = parser.parse("name:mike - football+");
-		
-		// 匹配一个区间，主要：TO必须是大写
-		query = parser.parse("id:[1 TO 3]");
-		// 闭区间
-		query = parser.parse("id:(1 TO 3)");
-		
-		// 完全匹配
-		query = parser.parse("\"I like football\"");
-		
-		// 距离一个单词
-		query = parser.parse("\"I football\"~1");
-		
-		// 模糊查询
-		query = parser.parse("name:make~");
-		HelloSearcher.searchByQueryParse(query, 10);
 	}
 	
 	public static void searchPage(String content, int pageIndex, int pageSize) {
@@ -330,8 +392,9 @@ public class HelloSearcher {
 			int end = pageIndex * pageSize;
 			for(int i = start; i < end; i++ ) {
 				Document document = searcher.doc(sds[i].doc);
-				System.out.println(document.get("id") + ", " + document.get("name") + ", " + document.get("email"));
+				print(sds[i], document);
 			}
+			
 			searcher.close();
 		} catch (ParseException e) {
 			e.printStackTrace();
@@ -346,10 +409,9 @@ public class HelloSearcher {
 			QueryParser parser = new QueryParser(Version.LUCENE_35, "content", new StandardAnalyzer(Version.LUCENE_35));
 			Query query = parser.parse(content);
 			TopDocs tds = searcher.searchAfter(after, query, pageSize);
-			ScoreDoc[] sds = tds.scoreDocs;
-			for(ScoreDoc sd : sds) {
-				Document document = searcher.doc(sd.doc);
-				System.out.println(document.get("id") + ", " + document.get("name") + ", " + document.get("email"));
+			for(ScoreDoc scoreDoc : tds.scoreDocs) {
+				Document document = searcher.doc(scoreDoc.doc);
+				print(scoreDoc, document);
 			}
 			searcher.close();
 		} catch (ParseException e) {
@@ -384,9 +446,9 @@ public class HelloSearcher {
 			Query query = parser.parse(content);
 			ScoreDoc lastSocreDoc = getLastScoreDoc(pageIndex, pageSize, query, searcher);
 			TopDocs tds = searcher.searchAfter(lastSocreDoc, query, pageSize);
-			for(ScoreDoc sd : tds.scoreDocs) {
-				Document document = searcher.doc(sd.doc);
-				System.out.println(document.get("id") + ", " + document.get("name") + ", " + document.get("email"));
+			for(ScoreDoc scoreDoc : tds.scoreDocs) {
+				Document document = searcher.doc(scoreDoc.doc);
+				print(scoreDoc, document);
 			}
 			searcher.close();
 		} catch (ParseException e) {
@@ -395,6 +457,5 @@ public class HelloSearcher {
 			e.printStackTrace();
 		}
 	}
-	
 	
 } 
