@@ -64,7 +64,7 @@ public class HelloIndex {
 		}
 	}
 	
-	public static IndexSearcher getSearcher() {
+	private static IndexSearcher getSearcher() {
 		try {
 			if(reader == null) {
 				reader = IndexReader.open(directory, false);
@@ -272,7 +272,9 @@ public class HelloIndex {
 			TopDocs topDocs = searcher.search(query, 10);
 			for(ScoreDoc scoreDoc : topDocs.scoreDocs) {
 				Document document = searcher.doc(scoreDoc.doc);
-				System.out.println(document.get("id") + ", " + document.get("name") + ", " + document.get("email"));
+				System.out.println("("+scoreDoc.doc+"-"+document.getBoost()+"-"+scoreDoc.score+")"+
+						document.get("name")+"["+document.get("email")+"]-->"+document.get("id")+","+
+						document.get("attach")+","+document.get("date")+","+document.getValues("email")[1]);
 			}
 			
 			searcher.close();
@@ -282,13 +284,6 @@ public class HelloIndex {
 			e.printStackTrace();
 		}
 		
-	}
-	
-	public static void main(String[] args) {
-		HelloIndex.deleteAll();
-		HelloIndex.index();
-//		HelloIndex.query();
-		HelloIndex.search();
 	}
 	
 }

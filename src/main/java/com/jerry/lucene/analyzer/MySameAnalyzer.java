@@ -29,6 +29,4 @@ public class MySameAnalyzer extends Analyzer {
 				new MMSegTokenizer(new MaxWordSeg(dic), reader), sameWordContext);
 	}
 	
-	
-
 }

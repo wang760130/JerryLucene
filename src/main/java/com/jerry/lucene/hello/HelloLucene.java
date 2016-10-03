@@ -20,6 +20,7 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.LockObtainFailedException;
+import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.Version;
 
 /**
@@ -92,13 +93,14 @@ public class HelloLucene {
 			// 创建parser来确定要搜索文件的内容
 			QueryParser paeser = new QueryParser(Version.LUCENE_35, "content", new StandardAnalyzer(Version.LUCENE_35));
 			// 创建query，表示搜索域为content中包含java 的文档
-			Query query = paeser.parse("java");
+			Query query = paeser.parse("ScheduledFuture");
 			
 			// 5、根据seacher搜索并且返回TopDocs
 			TopDocs topDocs = searcher.search(query, 10);
 			
 			// 6、根据TopDocs获取ScoreDoc对象
 			ScoreDoc[] scoreDocs = topDocs.scoreDocs;
+			System.out.println("scoreDocs length = " + scoreDocs.length);
 			for(ScoreDoc scoreDoc : scoreDocs) {
 				// 7、根据seacher和ScordDoc对象获取具体的Document对象
 				Document document = searcher.doc(scoreDoc.doc);
@@ -117,8 +119,18 @@ public class HelloLucene {
 
 	}
 	
-	public static void main(String[] args) {
-		HelloLucene.index();
-		HelloLucene.searcher();
+	public static void deleteAll() {
+		try {
+			Directory directory = FSDirectory.open(new File(INDEX_FILE_PATH));
+			IndexWriter writer = new IndexWriter(directory, new IndexWriterConfig(Version.LUCENE_35, new StandardAnalyzer(Version.LUCENE_35)));
+			writer.deleteAll();
+			writer.close();
+		} catch (CorruptIndexException e) {
+			e.printStackTrace();
+		} catch (LockObtainFailedException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }
