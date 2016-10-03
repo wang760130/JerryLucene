@@ -20,6 +20,36 @@ public class HelloIndexTest {
 	}
 	
 	@Test
+	public void writerDeleteTest() {
+		HelloIndex.writerDelete();
+	}
+	
+	@Test
+	public void readerDeleteTest() {
+		HelloIndex.readerDelete();
+	}
+	
+	@Test
+	public void undeleteTest() {
+		HelloIndex.undelete();
+	}
+
+	@Test
+	public void forceMergeDeletesTest() {
+		HelloIndex.forceMergeDeletes();
+	}
+	
+	@Test
+	public void forceMergeTest() {
+		HelloIndex.forceMerge();
+	}
+	
+	@Test
+	public void updateTest() {
+		HelloIndex.update();
+	}
+	
+	@Test
 	public void queryTest() {
 		HelloIndex.query();
 	}
