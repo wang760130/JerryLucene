@@ -123,7 +123,7 @@ public class HelloSearcher {
 		sb.append("name=").append(document.get("name")).append(", ");
 		sb.append("email=").append(document.get("email")).append(", ");
 		sb.append("date=").append(document.get("date")).append(", ");
-		sb.append("attach=").append(document.get("attach")).append(", ");
+		sb.append("attachs=").append(document.get("attachs")).append(", ");
 		System.out.println(sb.toString());
 	}
 	
@@ -208,12 +208,11 @@ public class HelloSearcher {
 	/**
 	 * 按范围搜索
 	 * @param field
-	 * @param name
 	 * @param start
 	 * @param end
 	 * @param num
 	 */
-	public static void searchByRange(String field, String name, String start, String end, int num) {
+	public static void searchByTermRange(String field, String start, String end, int num) {
 		try {
 			IndexSearcher searcher = getSearcher();
 			Query query = new TermRangeQuery(field, start, end, true, true);
@@ -332,13 +331,13 @@ public class HelloSearcher {
 		}
 	}
 	
-	public static void searchByPhrase(String field1, String value1, String field2, String value2, int num) {
+	public static void searchByPhrase(String field, String value1,  String value2,  int slop, int num) {
 		try {
 			IndexSearcher searcher = getSearcher();
 			PhraseQuery query = new PhraseQuery();
-			query.add(new Term(field1, value1));
-			query.add(new Term(field2, value2));
-			query.setSlop(1);
+			query.add(new Term(field, value1));
+			query.add(new Term(field, value2));
+			query.setSlop(slop);
 			TopDocs tds = searcher.search(query, num);
 			System.out.println("一共查询了：" + tds.totalHits);
 			
@@ -359,10 +358,10 @@ public class HelloSearcher {
 	 * @param value
 	 * @param num
 	 */
-	public static void searchByFuzzy(String field, String value, int num) {
+	public static void searchByFuzzy(String field, String value, float minimumSimilarity, int prefixLength, int num) {
 		try {
 			IndexSearcher searcher = getSearcher();
-			Query query = new FuzzyQuery(new Term(field, value));
+			Query query = new FuzzyQuery(new Term(field, value), minimumSimilarity, prefixLength);
 			TopDocs tds = searcher.search(query, num);
 			System.out.println("一共查询了：" + tds.totalHits);
 			
@@ -417,10 +416,10 @@ public class HelloSearcher {
 		}
 	}
 	
-	public static void searchPageByAfter(String content, ScoreDoc after, int pageSize) {
+	public static void searchPageByAfter(String field, String content, ScoreDoc after, int pageSize) {
 		try {
 			IndexSearcher searcher = getSearcher();
-			QueryParser parser = new QueryParser(Version.LUCENE_35, "content", new StandardAnalyzer(Version.LUCENE_35));
+			QueryParser parser = new QueryParser(Version.LUCENE_35, field, new StandardAnalyzer(Version.LUCENE_35));
 			Query query = parser.parse(content);
 			TopDocs tds = searcher.searchAfter(after, query, pageSize);
 			for(ScoreDoc scoreDoc : tds.scoreDocs) {
@@ -453,10 +452,10 @@ public class HelloSearcher {
 		return tds.scoreDocs[num - 1];
 	}
 	
-	public static void searchPageByAfter(String content, int pageIndex, int pageSize) {
+	public static void searchPageByAfter(String field, String content, int pageIndex, int pageSize) {
 		try {
 			IndexSearcher searcher = getSearcher();
-			QueryParser parser = new QueryParser(Version.LUCENE_35, "content", new StandardAnalyzer(Version.LUCENE_35));
+			QueryParser parser = new QueryParser(Version.LUCENE_35, field, new StandardAnalyzer(Version.LUCENE_35));
 			Query query = parser.parse(content);
 			ScoreDoc lastSocreDoc = getLastScoreDoc(pageIndex, pageSize, query, searcher);
 			TopDocs tds = searcher.searchAfter(lastSocreDoc, query, pageSize);

@@ -22,6 +22,53 @@ public class HelloSearcherTest {
 		HelloSearcher.index();
 	}
 	
+	@Test
+	public void searchByTermTest() {
+		HelloSearcher.searchByTerm("content","like",3);
+	}
+	
+	@Test
+	public void searchByTermRangeTest() {
+		//查询name以a开头和s结尾的
+		HelloSearcher.searchByTermRange("name","a","s",10);
+		
+		//由于attachs是数字类型，使用TermRange无法查询
+//		HelloSearcher.searchByTermRange("attach","2","10", 5);
+	}
+	
+	@Test
+	public void searchByNumRange() {
+		HelloSearcher.searchByNumricRange("attachs", 2, 4, 5);
+	}
+	
+	@Test
+	public void searchByPrefixTest() {
+		HelloSearcher.searchByPrefix("name", "j", 10);
+	}
+	
+	@Test
+	public void searchByWildcardTest() {
+		//匹配@itat.org结尾的所有字符
+		HelloSearcher.searchByWildcard("email", "*@itat.org", 10);
+		//匹配j开头的有三个字符的name
+		HelloSearcher.searchByWildcard("name", "j???", 10);
+	}
+	
+	@Test
+	public void searchByBooleanTest() {
+		HelloSearcher.searchByBoolean("name", "zhangsan", "content", "welcome", 10);
+	}
+	
+	@Test
+	public void searchByPhraseTest() {
+		HelloSearcher.searchByPhrase("name", "zhangsan", "lisi", 2, 10);
+	}
+	
+	@Test
+	public void searchByFuzzyTest() {
+		HelloSearcher.searchByFuzzy("name", "aohn", 0.3F, 0, 10);
+	}
+	
 	public void searchByQueryParseTest() throws ParseException {
 		// 创建QueryParser对象
 		QueryParser parser = new QueryParser(Version.LUCENE_35, "content", new StandardAnalyzer(Version.LUCENE_35));
