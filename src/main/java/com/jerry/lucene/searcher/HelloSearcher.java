@@ -1,4 +1,4 @@
-package com.jerry.lucene.hello;
+package com.jerry.lucene.searcher;
 
 import java.io.File;
 import java.io.IOException;
@@ -158,6 +158,20 @@ public class HelloSearcher {
 			}
 			
 			indexWriter.close();
+		} catch (CorruptIndexException e) {
+			e.printStackTrace();
+		} catch (LockObtainFailedException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void deleteAll() {
+		try {
+			IndexWriter writer = new IndexWriter(directory, new IndexWriterConfig(Version.LUCENE_35, new StandardAnalyzer(Version.LUCENE_35)));
+			writer.deleteAll();
+			writer.close();
 		} catch (CorruptIndexException e) {
 			e.printStackTrace();
 		} catch (LockObtainFailedException e) {

@@ -1,6 +1,8 @@
-package com.jerry.lucene.hello;
+package com.jerry.lucene.index;
 
 import org.junit.Test;
+
+import com.jerry.lucene.index.HelloIndex;
 
 /**
  * @author Jerry Wang

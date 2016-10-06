@@ -1,4 +1,4 @@
-package com.jerry.lucene.hello;
+package com.jerry.lucene.searcher;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.queryParser.ParseException;
@@ -6,10 +6,23 @@ import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.queryParser.QueryParser.Operator;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
+import org.junit.Test;
+
+import com.jerry.lucene.searcher.HelloSearcher;
 
 public class HelloSearcherTest {
 
-	public static void main(String[] args) throws ParseException {
+	@Test
+	public void deleteAllTest() {
+		HelloSearcher.deleteAll();
+	}
+	
+	@Test
+	public void indexTest() {
+		HelloSearcher.index();
+	}
+	
+	public void searchByQueryParseTest() throws ParseException {
 		// 创建QueryParser对象
 		QueryParser parser = new QueryParser(Version.LUCENE_35, "content", new StandardAnalyzer(Version.LUCENE_35));
 		
@@ -49,7 +62,9 @@ public class HelloSearcherTest {
 		
 		// 模糊查询
 		query = parser.parse("name:make~");
-//		HelloSearcherTest.searchByQueryParse(query, 10);
+		HelloSearcher.searchByQueryParse(query, 10);
 	}
+	
+	
 
 }

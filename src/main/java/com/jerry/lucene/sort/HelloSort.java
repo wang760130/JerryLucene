@@ -1,4 +1,4 @@
-package com.jerry.lucene.hello;
+package com.jerry.lucene.sort;
 
 /**
  * @author Jerry Wang

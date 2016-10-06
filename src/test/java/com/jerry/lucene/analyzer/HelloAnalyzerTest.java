@@ -1,4 +1,4 @@
-package com.jerry.lucene.hello;
+package com.jerry.lucene.analyzer;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.SimpleAnalyzer;
@@ -9,6 +9,7 @@ import org.apache.lucene.util.Version;
 import org.junit.Test;
 
 import com.chenlb.mmseg4j.analysis.MMSegAnalyzer;
+import com.jerry.lucene.analyzer.HelloAnalyzer;
 import com.jerry.lucene.analyzer.MySameAnalyzer;
 import com.jerry.lucene.analyzer.MyStopAnalyzer;
 import com.jerry.lucene.analyzer.SameWordContext;

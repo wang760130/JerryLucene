@@ -1,4 +1,4 @@
-package com.jerry.lucene.hello;
+package com.jerry.lucene.index;
 
 import java.io.File;
 import java.io.IOException;

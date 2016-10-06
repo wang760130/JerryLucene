@@ -1,4 +1,4 @@
-package com.jerry.lucene.hello;
+package com.jerry.lucene.analyzer;
 
 import java.io.IOException;
 import java.io.StringReader;
