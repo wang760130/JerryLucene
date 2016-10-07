@@ -20,6 +20,7 @@ import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.NumericRangeQuery;
@@ -27,6 +28,7 @@ import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TermRangeQuery;
 import org.apache.lucene.search.TopDocs;
@@ -43,11 +45,13 @@ import org.apache.lucene.util.Version;
  */
 public class HelloSearcher {
 	
-	private static String INDEX_FILE_PATH = System.getProperty("user.dir") + File.separator + "index" + File.separator;
+	private final static String INDEX_FILE_PATH = System.getProperty("user.dir") + File.separator + "index" + File.separator;
 
-	private static String[] ids = {"1","2","3","4","5","6"};
-	private static String[] emails = {"aa@itat.org","bb@itat.org","cc@cc.org","dd@sina.org","ee@zttc.edu","ff@itat.org"};
-	private static String[] contents = {
+	private final static String[] ids = {"1","2","3","4","5","6"};
+	private final static String[] emails = {"aa@itat.org","bb@itat.org","cc@cc.org","dd@sina.org","ee@zttc.edu","ff@itat.org"};
+	private final static int[] attachs = {2,3,1,4,5,5};
+	private final static String[] names = {"zhangsan","lisi","john","jetty","mike","jake"};
+	private final static String[] contents = {
 			"welcome to visited the space,I like book",
 			"hello boy, I like pingpeng ball",
 			"my name is cc I like game",
@@ -56,11 +60,10 @@ public class HelloSearcher {
 			"I like movie and swim"
 	};
 	
-	private static Date[] dates = null;
-	private static int[] attachs = {2,3,1,4,5,5};
-	private static String[] names = {"zhangsan","lisi","john","jetty","mike","jake"};
-	private static Map<String,Float> scores = new HashMap<String,Float>();
+	private final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	
+	private static Date[] dates = null;
+	private static Map<String,Float> scores = new HashMap<String,Float>();
 	private static Directory directory = null;
 	private static IndexReader reader = null;
 	
@@ -81,7 +84,6 @@ public class HelloSearcher {
 	}
 	
 	private static void setDates()  {
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 		dates = new Date[ids.length];
 		try {
 			dates[0] = sdf.parse("2010-02-19");
@@ -122,7 +124,7 @@ public class HelloSearcher {
 		sb.append("id=").append(document.get("id")).append(", ");
 		sb.append("name=").append(document.get("name")).append(", ");
 		sb.append("email=").append(document.get("email")).append(", ");
-		sb.append("date=").append(document.get("date")).append(", ");
+		sb.append("date=").append(sdf.format(new Date(Long.valueOf(document.get("date"))))).append(", ");
 		sb.append("attachs=").append(document.get("attachs")).append(", ");
 		System.out.println(sb.toString());
 	}
@@ -187,7 +189,7 @@ public class HelloSearcher {
 	 * @param name
 	 * @param num
 	 */
-	public static void searchByTerm(String field, String name, int num) {
+	public static void searcherByTerm(String field, String name, int num) {
 		try {
 			IndexSearcher searcher = getSearcher();
 			Query query = new TermQuery(new Term(field, name));
@@ -212,7 +214,7 @@ public class HelloSearcher {
 	 * @param end
 	 * @param num
 	 */
-	public static void searchByTermRange(String field, String start, String end, int num) {
+	public static void searcherByTermRange(String field, String start, String end, int num) {
 		try {
 			IndexSearcher searcher = getSearcher();
 			Query query = new TermRangeQuery(field, start, end, true, true);
@@ -237,7 +239,7 @@ public class HelloSearcher {
 	 * @param end
 	 * @param num
 	 */
-	public static void searchByNumricRange(String field, int start, int end, int num) {
+	public static void searcherByNumricRange(String field, int start, int end, int num) {
 		try {
 			IndexSearcher searcher = getSearcher();
 			Query query = NumericRangeQuery.newIntRange(field, start, end, true, true);
@@ -261,7 +263,7 @@ public class HelloSearcher {
 	 * @param value
 	 * @param num
 	 */
-	public static void searchByPrefix(String field, String value, int num) {
+	public static void searcherByPrefix(String field, String value, int num) {
 		try {
 			IndexSearcher searcher = getSearcher();
 			Query query = new PrefixQuery(new Term(field, value));
@@ -285,7 +287,7 @@ public class HelloSearcher {
 	 * @param value
 	 * @param num
 	 */
-	public static void searchByWildcard(String field, String value, int num) {
+	public static void searcherByWildcard(String field, String value, int num) {
 		try {
 			IndexSearcher searcher = getSearcher();
 			// 在传入的value中可以使用通配符：?和*，?表示匹配一个字符，*表示匹配任意多个字符
@@ -304,7 +306,7 @@ public class HelloSearcher {
 		}
 	}
 	
-	public static void searchByBoolean(String field1, String value1, String field2, String value2, int num) {
+	public static void searcherByBoolean(String field1, String value1, String field2, String value2, int num) {
 		try {
 			IndexSearcher searcher = getSearcher();
 			BooleanQuery query = new BooleanQuery();
@@ -331,7 +333,7 @@ public class HelloSearcher {
 		}
 	}
 	
-	public static void searchByPhrase(String field, String value1,  String value2,  int slop, int num) {
+	public static void searcherByPhrase(String field, String value1,  String value2,  int slop, int num) {
 		try {
 			IndexSearcher searcher = getSearcher();
 			PhraseQuery query = new PhraseQuery();
@@ -358,7 +360,7 @@ public class HelloSearcher {
 	 * @param value
 	 * @param num
 	 */
-	public static void searchByFuzzy(String field, String value, float minimumSimilarity, int prefixLength, int num) {
+	public static void searcherByFuzzy(String field, String value, float minimumSimilarity, int prefixLength, int num) {
 		try {
 			IndexSearcher searcher = getSearcher();
 			Query query = new FuzzyQuery(new Term(field, value), minimumSimilarity, prefixLength);
@@ -376,7 +378,7 @@ public class HelloSearcher {
 		}
 	}
 	
-	public static void searchByQueryParse(Query query, int num) {
+	public static void searcherByQueryParse(Query query, int num) {
 		try {
 			IndexSearcher searcher = getSearcher();
 			TopDocs tds = searcher.search(query, num);
@@ -393,7 +395,7 @@ public class HelloSearcher {
 		}
 	}
 	
-	public static void searchPage(String content, int pageIndex, int pageSize) {
+	public static void searcherPage(String content, int pageIndex, int pageSize) {
 		try {
 			IndexSearcher searcher = getSearcher();
 			QueryParser parser = new QueryParser(Version.LUCENE_35, "content", new StandardAnalyzer(Version.LUCENE_35));
@@ -416,7 +418,7 @@ public class HelloSearcher {
 		}
 	}
 	
-	public static void searchPageByAfter(String field, String content, ScoreDoc after, int pageSize) {
+	public static void searcherPageByAfter(String field, String content, ScoreDoc after, int pageSize) {
 		try {
 			IndexSearcher searcher = getSearcher();
 			QueryParser parser = new QueryParser(Version.LUCENE_35, field, new StandardAnalyzer(Version.LUCENE_35));
@@ -452,12 +454,14 @@ public class HelloSearcher {
 		return tds.scoreDocs[num - 1];
 	}
 	
-	public static void searchPageByAfter(String field, String content, int pageIndex, int pageSize) {
+	public static void searcherPageByAfter(String field, String content, int pageIndex, int pageSize) {
 		try {
 			IndexSearcher searcher = getSearcher();
 			QueryParser parser = new QueryParser(Version.LUCENE_35, field, new StandardAnalyzer(Version.LUCENE_35));
 			Query query = parser.parse(content);
+			// 先获取上一页的最后一个元素
 			ScoreDoc lastSocreDoc = getLastScoreDoc(pageIndex, pageSize, query, searcher);
+			// 通过最后一个元素搜索下页的pageSize个元素
 			TopDocs tds = searcher.searchAfter(lastSocreDoc, query, pageSize);
 			for(ScoreDoc scoreDoc : tds.scoreDocs) {
 				Document document = searcher.doc(scoreDoc.doc);
@@ -471,4 +475,76 @@ public class HelloSearcher {
 		}
 	}
 	
+	public static void searcherByFilter(String field, String content, Filter filter, int num) {
+		try {
+			IndexSearcher searcher = getSearcher();
+			QueryParser parser = new QueryParser(Version.LUCENE_35, field, new StandardAnalyzer(Version.LUCENE_35));
+			Query query = parser.parse(content);
+			TopDocs tds = null;
+			if(filter!=null)
+				tds = searcher.search(query, filter, num);
+			else {
+				tds = searcher.search(query, num);
+			}
+			for(ScoreDoc scoreDoc : tds.scoreDocs) {
+				Document document = searcher.doc(scoreDoc.doc);
+				print(scoreDoc, document);
+			}
+			searcher.close();
+		} catch (NumberFormatException e) {
+			e.printStackTrace();
+		} catch (CorruptIndexException e) {
+			e.printStackTrace();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void searcherBySort(String field, String content, Sort sort, int num) {
+		try {
+			IndexSearcher searcher = getSearcher();
+			QueryParser parser = new QueryParser(Version.LUCENE_35, field, new StandardAnalyzer(Version.LUCENE_35));
+			Query query = parser.parse(content);
+			TopDocs tds = null;
+			if(sort!=null)
+				tds = searcher.search(query, num, sort);
+			else {
+				tds = searcher.search(query, num);
+			}
+			for(ScoreDoc scoreDoc : tds.scoreDocs) {
+				Document document = searcher.doc(scoreDoc.doc);
+				print(scoreDoc, document);
+			}
+			searcher.close();
+		} catch (NumberFormatException e) {
+			e.printStackTrace();
+		} catch (CorruptIndexException e) {
+			e.printStackTrace();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void searcherByQuery(Query query, int num) {
+		try {
+			IndexSearcher searcher = getSearcher();
+			TopDocs tds = null;
+			tds = searcher.search(query, num);
+			for(ScoreDoc scoreDoc : tds.scoreDocs) {
+				Document document = searcher.doc(scoreDoc.doc);
+				print(scoreDoc, document);
+			}
+			searcher.close();
+		} catch (NumberFormatException e) {
+			e.printStackTrace();
+		} catch (CorruptIndexException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 } 

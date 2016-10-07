@@ -1,14 +1,22 @@
 package com.jerry.lucene.searcher;
 
+
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.queryParser.QueryParser.Operator;
+import org.apache.lucene.search.Filter;
+import org.apache.lucene.search.NumericRangeFilter;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryWrapperFilter;
+import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.SortField;
+import org.apache.lucene.search.TermRangeFilter;
+import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.util.Version;
 import org.junit.Test;
 
-import com.jerry.lucene.searcher.HelloSearcher;
 
 public class HelloSearcherTest {
 
@@ -23,53 +31,53 @@ public class HelloSearcherTest {
 	}
 	
 	@Test
-	public void searchByTermTest() {
-		HelloSearcher.searchByTerm("content","like",3);
+	public void searchererByTermTest() {
+		HelloSearcher.searcherByTerm("content","like",3);
 	}
 	
 	@Test
-	public void searchByTermRangeTest() {
+	public void searcherByTermRangeTest() {
 		//查询name以a开头和s结尾的
-		HelloSearcher.searchByTermRange("name","a","s",10);
+		HelloSearcher.searcherByTermRange("name","a","s",10);
 		
 		//由于attachs是数字类型，使用TermRange无法查询
-//		HelloSearcher.searchByTermRange("attach","2","10", 5);
+//		HelloSearcher.searcherByTermRange("attach","2","10", 5);
 	}
 	
 	@Test
-	public void searchByNumRange() {
-		HelloSearcher.searchByNumricRange("attachs", 2, 4, 5);
+	public void searcherByNumRange() {
+		HelloSearcher.searcherByNumricRange("attachs", 2, 4, 5);
 	}
 	
 	@Test
-	public void searchByPrefixTest() {
-		HelloSearcher.searchByPrefix("name", "j", 10);
+	public void searcherByPrefixTest() {
+		HelloSearcher.searcherByPrefix("name", "j", 10);
 	}
 	
 	@Test
-	public void searchByWildcardTest() {
+	public void searcherByWildcardTest() {
 		//匹配@itat.org结尾的所有字符
-		HelloSearcher.searchByWildcard("email", "*@itat.org", 10);
+		HelloSearcher.searcherByWildcard("email", "*@itat.org", 10);
 		//匹配j开头的有三个字符的name
-		HelloSearcher.searchByWildcard("name", "j???", 10);
+		HelloSearcher.searcherByWildcard("name", "j???", 10);
 	}
 	
 	@Test
-	public void searchByBooleanTest() {
-		HelloSearcher.searchByBoolean("name", "zhangsan", "content", "welcome", 10);
+	public void searcherByBooleanTest() {
+		HelloSearcher.searcherByBoolean("name", "zhangsan", "content", "welcome", 10);
 	}
 	
 	@Test
-	public void searchByPhraseTest() {
-		HelloSearcher.searchByPhrase("name", "zhangsan", "lisi", 2, 10);
+	public void searcherByPhraseTest() {
+		HelloSearcher.searcherByPhrase("name", "zhangsan", "lisi", 2, 10);
 	}
 	
 	@Test
-	public void searchByFuzzyTest() {
-		HelloSearcher.searchByFuzzy("name", "aohn", 0.3F, 0, 10);
+	public void searcherByFuzzyTest() {
+		HelloSearcher.searcherByFuzzy("name", "aohn", 0.3F, 0, 10);
 	}
 	
-	public void searchByQueryParseTest() throws ParseException {
+	public void searcherByQueryParseTest() throws ParseException {
 		// 创建QueryParser对象
 		QueryParser parser = new QueryParser(Version.LUCENE_35, "content", new StandardAnalyzer(Version.LUCENE_35));
 		
@@ -109,9 +117,44 @@ public class HelloSearcherTest {
 		
 		// 模糊查询
 		query = parser.parse("name:make~");
-		HelloSearcher.searchByQueryParse(query, 10);
+		HelloSearcher.searcherByQueryParse(query, 10);
 	}
 	
+	@Test
+	public void searcherBySortTest() {
+		//Sort.INDEXORDER通过doc的id进行排序
+		HelloSearcher.searcherBySort("content", "java", Sort.INDEXORDER, 50);
+		
+		//使用默认的评分排序
+		HelloSearcher.searcherBySort("content", "java", Sort.RELEVANCE, 50);
+		
+		HelloSearcher.searcherBySort("content", "java", null, 50);
+		
+		//通过文件的大小排序
+		HelloSearcher.searcherBySort("content", "java", new Sort(new SortField("size",SortField.INT)), 50);
+		//通过日期排序
+		HelloSearcher.searcherBySort("content", "java", new Sort(new SortField("date",SortField.LONG)), 50);
+		//通过文件名排序
+		HelloSearcher.searcherBySort("content", "java", new Sort(new SortField("filename", SortField.STRING)), 50);
+		
+		//通过设置SortField最后一个参数设置是否反转排序
+		HelloSearcher.searcherBySort("content", "java", new Sort(new SortField("filename", SortField.STRING,true)), 50);
 	
+		HelloSearcher.searcherBySort("content", "java", new Sort(new SortField("size",SortField.INT),SortField.FIELD_SCORE), 50);
+	}
 
+	@Test
+	public void searcherByFilterTest() {
+		Filter filter = new TermRangeFilter("filename", "java.hhh","java.she",true, true);
+		filter = NumericRangeFilter.newIntRange("size",500,900,true,true);
+		//可以通过一个Query进行过滤
+		filter = new QueryWrapperFilter(new WildcardQuery(new Term("filename","*.txt")));
+		HelloSearcher.searcherByFilter("content","java", filter, 50);
+	}
+	
+	@Test
+	public void searcherByQueryTest() {
+		Query query = new WildcardQuery(new Term("filename","A*"));
+		HelloSearcher.searcherByQuery(query, 50);
+	}
 }
