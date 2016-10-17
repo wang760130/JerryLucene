@@ -35,7 +35,15 @@
 		    <artifactId>mmseg4j-all-with-dic</artifactId>
 		    <version>1.8.6</version>
 		</dependency>
-	
+		
+		<!-- tika -->
+		<dependency>
+		    <groupId>org.apache.tika</groupId>
+		    <artifactId>tika-core</artifactId>
+		    <version>1.5</version>
+		</dependency>
+		
+		
 	</dependencies>
 	
 	<build>
