@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
@@ -59,7 +60,19 @@ public class HelloTika {
 			}
 		}
 		
-		return "error!!";
+		return null;
 	}	
+	
+	public static String tikaTool(File file) {
+		try {
+			Tika tika = new Tika();
+			return tika.parseToString(file);
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (TikaException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 	
 }

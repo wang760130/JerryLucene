@@ -11,9 +11,15 @@ import org.junit.Test;
  */
 public class HelloTikaTest {
 	
+	private final String file = System.getProperty("user.dir") + File.separator + "data" + File.separator + "如何学习C语言.doc";
+	
 	@Test
 	public void fileToTxtTest() {
-		System.out.println(HelloTika.fileToTxt(new File("F:\\ACM\\如何学习C语言.doc")));
+		System.out.println(HelloTika.fileToTxt(new File(file)));
 	}
-
+	
+	@Test
+	public void tikaToolTest() {
+		System.out.println(HelloTika.tikaTool(new File(file)));
+	}
 }
