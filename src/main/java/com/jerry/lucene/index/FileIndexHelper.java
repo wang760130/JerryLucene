@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Random;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -21,6 +22,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.util.Version;
+import org.apache.tika.Tika;
 
 /**
  * @author Jerry Wang
@@ -56,16 +58,18 @@ public class FileIndexHelper {
 			Document doc = null;
 			Random ran = new Random();
 			int index = 0;
-			for(File f:file.listFiles()) {
+			for(File f : file.listFiles()) {
 				int score = ran.nextInt(600);
 				doc = new Document();
-				doc.add(new Field("id",String.valueOf(index++),Field.Store.YES,Field.Index.NOT_ANALYZED_NO_NORMS));
-				doc.add(new Field("content",new FileReader(f)));
-				doc.add(new Field("filename",f.getName(),Field.Store.YES,Field.Index.NOT_ANALYZED));
-				doc.add(new Field("path",f.getAbsolutePath(),Field.Store.YES,Field.Index.NOT_ANALYZED));
-				doc.add(new NumericField("date",Field.Store.YES,true).setLongValue(f.lastModified()));
-				doc.add(new NumericField("size",Field.Store.YES,true).setIntValue((int)(f.length())));
-				doc.add(new NumericField("score",Field.Store.NO,true).setIntValue(score));
+				doc.add(new Field("id", String.valueOf(index++), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+				doc.add(new Field("content", new Tika().parse(f)));
+				doc.add(new Field("title", FilenameUtils.getBaseName(f.getName()), Field.Store.YES, Field.Index.ANALYZED));
+				doc.add(new Field("filename", f.getName(), Field.Store.YES, Field.Index.NOT_ANALYZED));
+				doc.add(new Field("path", f.getAbsolutePath(), Field.Store.YES, Field.Index.NOT_ANALYZED));
+				doc.add(new Field("type", FilenameUtils.getExtension(f.getName()), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+				doc.add(new NumericField("date", Field.Store.YES,true).setLongValue(f.lastModified()));
+				doc.add(new NumericField("size", Field.Store.YES,true).setIntValue((int)(f.length())));
+				doc.add(new NumericField("score", Field.Store.NO,true).setIntValue(score));
 				writer.addDocument(doc);
 			}
 		} catch (CorruptIndexException e) {
