@@ -28,6 +28,12 @@
 		    <artifactId>lucene-core</artifactId>
 		    <version>3.5.0</version>
 		</dependency>
+		
+		<dependency>
+		    <groupId>org.apache.lucene</groupId>
+		    <artifactId>lucene-highlighter</artifactId>
+		    <version>3.5.0</version>
+		</dependency>
 	
 		<!-- 中文分词器 -->
 		<dependency>
